@@ -2738,18 +2738,22 @@ screen_detect_url(Screen *screen, unsigned int x, unsigned int y) {
     if (link_id) {
         screen_mark_hyperlink(screen, x, y);
         // For OSC8 hyperlink, draw the URL on mouse hovering to reduce security risks.
-        const char* url = get_hyperlink_for_id(screen->hyperlink_pool, link_id, true);
-        index_type old_x = screen->cursor->x,
-                   old_y = screen->cursor->y;
-        // Draw URL at bottom left corner.
-        screen->cursor->x = 0;
-        screen->cursor->y = screen->lines - 1 - screen->scrolled_by;
-        screen_draw_overlay_text(screen, url, true);
-        screen->cursor->x = old_x;
-        screen->cursor->y = old_y;
+        // Don't draw if overlay_line is being used under cursor.
+        if (!screen->overlay_line.is_active || screen->overlay_line.fixed_position) {
+            const char* url = get_hyperlink_for_id(screen->hyperlink_pool, link_id, true);
+            index_type old_x = screen->cursor->x,
+                       old_y = screen->cursor->y;
+            // Draw URL at bottom left corner.
+            screen->cursor->x = 0;
+            screen->cursor->y = screen->lines - 1 - screen->scrolled_by;
+            screen_draw_overlay_text(screen, url, true);
+            screen->cursor->x = old_x;
+            screen->cursor->y = old_y;
+        }
         return true;
     }
-    screen_draw_overlay_text(screen, NULL, true);
+    if (screen->overlay_line.is_active && screen->overlay_line.fixed_position)
+        deactivate_overlay_line(screen);
     char_type sentinel = 0;
     if (line) {
         url_start = line_url_start_at(line, x);
