@@ -71,6 +71,11 @@ typedef struct {
     CPUCell *cpu_cells;
     GPUCell *gpu_cells;
     bool is_active;
+    // Whether the line is overlayed at a fixed position or moving with the current cursor.
+    // If fixed, the cursor should not move when the line is destroyed.
+    // If moving (e.g., when typing with an IME), cursor should be restored to
+    // the start of the overlay line when the line is destroyed.
+    bool fixed_position;
     index_type xstart, ynum, xnum;
 } OverlayLine;
 
@@ -255,7 +260,7 @@ void screen_dirty_sprite_positions(Screen *self);
 void screen_rescale_images(Screen *self);
 void screen_report_size(Screen *, unsigned int which);
 void screen_manipulate_title_stack(Screen *, unsigned int op, unsigned int which);
-void screen_draw_overlay_text(Screen *self, const char *utf8_text);
+void screen_draw_overlay_text(Screen *self, const char *utf8_text, bool fixed_position);
 void screen_set_key_encoding_flags(Screen *self, uint32_t val, uint32_t how);
 void screen_push_key_encoding_flags(Screen *self, uint32_t val);
 void screen_pop_key_encoding_flags(Screen *self, uint32_t num);

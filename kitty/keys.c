@@ -139,12 +139,12 @@ on_key_input(GLFWkeyevent *ev) {
         case GLFW_IME_WAYLAND_DONE_EVENT:
             // If we update IME position here it sends GNOME's text input system into
             // an infinite loop. See https://github.com/kovidgoyal/kitty/issues/5105
-            screen_draw_overlay_text(screen, NULL);
+            screen_draw_overlay_text(screen, NULL, false);
             debug("handled wayland IME done event\n");
             return;
         case GLFW_IME_PREEDIT_CHANGED:
             update_ime_position(w, screen);
-            screen_draw_overlay_text(screen, text);
+            screen_draw_overlay_text(screen, text, false);
             debug("updated pre-edit text: '%s'\n", text);
             return;
         case GLFW_IME_COMMIT_TEXT:
@@ -152,7 +152,7 @@ on_key_input(GLFWkeyevent *ev) {
                 schedule_write_to_child(w->id, 1, text, strlen(text));
                 debug("committed pre-edit text: %s\n", text);
             } else debug("committed pre-edit text: (null)\n");
-            screen_draw_overlay_text(screen, NULL);
+            screen_draw_overlay_text(screen, NULL, false);
             return;
         case GLFW_IME_NONE:
             // for macOS, update ime position on every key input

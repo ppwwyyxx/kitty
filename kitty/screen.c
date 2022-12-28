@@ -703,13 +703,18 @@ draw_codepoint(Screen *self, char_type och, bool from_input_stream) {
 }
 
 void
-screen_draw_overlay_text(Screen *self, const char *utf8_text) {
+screen_draw_overlay_text(Screen *self, const char *utf8_text, bool fixed_position) {
+    // utf8_text: the text to draw, or NULL to destroy the existing overlay line.
+    // fixed_position: whether the line is intended to be drawn at a fixed position.
+    //   Note that even when this is true, this function still draws the line based on current cursor.
+    //   In that case, caller should set/restore cursor position before/after calling this function.
     if (self->overlay_line.is_active) deactivate_overlay_line(self);
     if (!utf8_text || !utf8_text[0]) return;
     Line *line = range_line_(self, self->cursor->y);
     if (!line) return;
     line_save_cells(line, 0, self->columns, self->overlay_line.gpu_cells, self->overlay_line.cpu_cells);
     self->overlay_line.is_active = true;
+    self->overlay_line.fixed_position = fixed_position;
     self->overlay_line.ynum = self->cursor->y;
     self->overlay_line.xstart = self->cursor->x;
     self->overlay_line.xnum = 0;
@@ -761,7 +766,7 @@ static void
 restore_overlay_line(struct SaveOverlayLine *sol) {
     if (sol->overlay_text) {
         debug("Received input from child (%s) while overlay active. Overlay contents: %s\n", sol->func_name, PyUnicode_AsUTF8(sol->overlay_text));
-        screen_draw_overlay_text(sol->screen, PyUnicode_AsUTF8(sol->overlay_text));
+        screen_draw_overlay_text(sol->screen, PyUnicode_AsUTF8(sol->overlay_text), false);
         Py_DECREF(sol->overlay_text);
         update_ime_position_for_window(sol->screen->window_id, false, 0);
     }
@@ -2667,7 +2672,8 @@ deactivate_overlay_line(Screen *self) {
     if (self->overlay_line.is_active && self->overlay_line.xnum && self->overlay_line.ynum < self->lines) {
         Line *line = range_line_(self, self->overlay_line.ynum);
         line_reset_cells(line, self->overlay_line.xstart, self->overlay_line.xnum, self->overlay_line.gpu_cells, self->overlay_line.cpu_cells);
-        if (self->cursor->y == self->overlay_line.ynum) self->cursor->x = self->overlay_line.xstart;
+        if (!self->overlay_line.fixed_position)
+          if (self->cursor->y == self->overlay_line.ynum) self->cursor->x = self->overlay_line.xstart;
         self->is_dirty = true;
         linebuf_mark_line_dirty(self->linebuf, self->overlay_line.ynum);
     }
@@ -2728,10 +2734,22 @@ screen_detect_url(Screen *screen, unsigned int x, unsigned int y) {
     index_type url_start, url_end = 0;
     Line *line = screen_visual_line(screen, y);
     if (!line || x >= screen->columns) return false;
-    if (line->cpu_cells[x].hyperlink_id) {
+    hyperlink_id_type link_id = line->cpu_cells[x].hyperlink_id;
+    if (link_id) {
         screen_mark_hyperlink(screen, x, y);
+        // For OSC8 hyperlink, draw the URL on mouse hovering to reduce security risks.
+        const char* url = get_hyperlink_for_id(screen->hyperlink_pool, link_id, true);
+        index_type old_x = screen->cursor->x,
+                   old_y = screen->cursor->y;
+        // Draw URL at bottom left corner.
+        screen->cursor->x = 0;
+        screen->cursor->y = screen->lines - 1 - screen->scrolled_by;
+        screen_draw_overlay_text(screen, url, true);
+        screen->cursor->x = old_x;
+        screen->cursor->y = old_y;
         return true;
     }
+    screen_draw_overlay_text(screen, NULL, true);
     char_type sentinel = 0;
     if (line) {
         url_start = line_url_start_at(line, x);
