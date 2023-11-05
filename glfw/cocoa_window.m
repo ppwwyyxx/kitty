@@ -111,12 +111,12 @@ vk_code_to_functional_key_code(uint8_t key_code) {  // {{{
         case 0x51: return GLFW_FKEY_KP_EQUAL;
         case 0x38: return GLFW_FKEY_LEFT_SHIFT;
         case 0x3b: return GLFW_FKEY_LEFT_CONTROL;
-        case 0x3a: return GLFW_FKEY_LEFT_ALT;
-        case 0x37: return GLFW_FKEY_LEFT_SUPER;
+        case 0x37: return GLFW_FKEY_LEFT_ALT;
+        case 0x3a: return GLFW_FKEY_LEFT_SUPER;
         case 0x3c: return GLFW_FKEY_RIGHT_SHIFT;
         case 0x3e: return GLFW_FKEY_RIGHT_CONTROL;
-        case 0x3d: return GLFW_FKEY_RIGHT_ALT;
-        case 0x36: return GLFW_FKEY_RIGHT_SUPER;
+        case 0x36: return GLFW_FKEY_RIGHT_ALT;
+        case 0x3d: return GLFW_FKEY_RIGHT_SUPER;
 /* end vk to functional */
         default:
             return 0;
@@ -503,9 +503,9 @@ translateFlags(NSUInteger flags)
     if (flags & NSEventModifierFlagControl)
         mods |= GLFW_MOD_CONTROL;
     if (flags & NSEventModifierFlagOption)
-        mods |= GLFW_MOD_ALT;
-    if (flags & NSEventModifierFlagCommand)
         mods |= GLFW_MOD_SUPER;
+    if (flags & NSEventModifierFlagCommand)
+        mods |= GLFW_MOD_ALT;
     if (flags & NSEventModifierFlagCapsLock)
         mods |= GLFW_MOD_CAPS_LOCK;
 
@@ -1098,9 +1098,9 @@ convert_cocoa_to_carbon_modifiers(NSUInteger flags) {
     if (flags & NSEventModifierFlagControl)
         mods |= controlKey;
     if (flags & NSEventModifierFlagOption)
-        mods |= optionKey;
-    if (flags & NSEventModifierFlagCommand)
         mods |= cmdKey;
+    if (flags & NSEventModifierFlagCommand)
+        mods |= optionKey;
     if (flags & NSEventModifierFlagCapsLock)
         mods |= alphaLock;
 
@@ -1286,12 +1286,12 @@ is_modifier_pressed(NSUInteger flags, NSUInteger target_mask, NSUInteger other_m
         case GLFW_FKEY_CAPS_LOCK:
             mod_name = "capslock";
             action = modifierFlags & NSEventModifierFlagCapsLock ? GLFW_PRESS : GLFW_RELEASE; break;
-        case GLFW_FKEY_LEFT_SUPER: action_for(super, NX_DEVICELCMDKEYMASK, NX_DEVICERCMDKEYMASK, NX_COMMANDMASK);
-        case GLFW_FKEY_RIGHT_SUPER: action_for(super, NX_DEVICERCMDKEYMASK, NX_DEVICELCMDKEYMASK, NX_COMMANDMASK);
+        case GLFW_FKEY_LEFT_SUPER: action_for(super, NX_DEVICELALTKEYMASK, NX_DEVICERALTKEYMASK, NX_COMMANDMASK);
+        case GLFW_FKEY_RIGHT_SUPER: action_for(super, NX_DEVICERALTKEYMASK, NX_DEVICELALTKEYMASK, NX_COMMANDMASK);
         case GLFW_FKEY_LEFT_CONTROL: action_for(ctrl, NX_DEVICELCTLKEYMASK, NX_DEVICERCTLKEYMASK, NX_CONTROLMASK);
         case GLFW_FKEY_RIGHT_CONTROL: action_for(ctrl, NX_DEVICERCTLKEYMASK, NX_DEVICELCTLKEYMASK, NX_CONTROLMASK);
-        case GLFW_FKEY_LEFT_ALT: action_for(alt, NX_DEVICELALTKEYMASK, NX_DEVICERALTKEYMASK, NX_ALTERNATEMASK);
-        case GLFW_FKEY_RIGHT_ALT: action_for(alt, NX_DEVICERALTKEYMASK, NX_DEVICELALTKEYMASK, NX_ALTERNATEMASK);
+        case GLFW_FKEY_LEFT_ALT: action_for(alt, NX_DEVICELCMDKEYMASK, NX_DEVICERCMDKEYMASK, NX_ALTERNATEMASK);
+        case GLFW_FKEY_RIGHT_ALT: action_for(alt, NX_DEVICERCMDKEYMASK, NX_DEVICELCMDKEYMASK, NX_ALTERNATEMASK);
         case GLFW_FKEY_LEFT_SHIFT: action_for(shift, NX_DEVICELSHIFTKEYMASK, NX_DEVICERSHIFTKEYMASK, NX_SHIFTMASK);
         case GLFW_FKEY_RIGHT_SHIFT: action_for(shift, NX_DEVICERSHIFTKEYMASK, NX_DEVICELSHIFTKEYMASK, NX_SHIFTMASK);
         default:
@@ -3160,9 +3160,9 @@ glfwGetCocoaKeyEquivalent(uint32_t glfw_key, int glfw_mods, int *cocoa_mods) {
     if (glfw_mods & GLFW_MOD_CONTROL)
         *cocoa_mods |= NSEventModifierFlagControl;
     if (glfw_mods & GLFW_MOD_ALT)
-        *cocoa_mods |= NSEventModifierFlagOption;
-    if (glfw_mods & GLFW_MOD_SUPER)
         *cocoa_mods |= NSEventModifierFlagCommand;
+    if (glfw_mods & GLFW_MOD_SUPER)
+        *cocoa_mods |= NSEventModifierFlagOption;
     if (glfw_mods & GLFW_MOD_CAPS_LOCK)
         *cocoa_mods |= NSEventModifierFlagCapsLock;
     return _glfwPlatformGetNativeKeyForKey(glfw_key);
